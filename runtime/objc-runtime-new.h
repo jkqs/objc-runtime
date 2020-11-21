@@ -278,10 +278,10 @@ public:
 
 
 struct cache_t {
-#if CACHE_MASK_STORAGE == CACHE_MASK_STORAGE_OUTLINED
-    explicit_atomic<struct bucket_t *> _buckets;
+#if CACHE_MASK_STORAGE == CACHE_MASK_STORAGE_OUTLINED // 模拟器或者macOS
+    explicit_atomic<struct bucket_t *> _buckets; // explicit_atomic保证了其中泛型<struct bucket_t *>的原子性
     explicit_atomic<mask_t> _mask;
-#elif CACHE_MASK_STORAGE == CACHE_MASK_STORAGE_HIGH_16
+#elif CACHE_MASK_STORAGE == CACHE_MASK_STORAGE_HIGH_16 // 64位真机
     explicit_atomic<uintptr_t> _maskAndBuckets;
     mask_t _mask_unused;
     
@@ -301,7 +301,7 @@ struct cache_t {
     
     // Ensure we have enough bits for the buckets pointer.
     static_assert(bucketsMask >= MACH_VM_MAX_ADDRESS, "Bucket field doesn't have enough bits for arbitrary pointers.");
-#elif CACHE_MASK_STORAGE == CACHE_MASK_STORAGE_LOW_4
+#elif CACHE_MASK_STORAGE == CACHE_MASK_STORAGE_LOW_4 // 非64位真机
     // _maskAndBuckets stores the mask shift in the low 4 bits, and
     // the buckets pointer in the remainder of the value. The mask
     // shift is the value where (0xffff >> shift) produces the correct
@@ -347,7 +347,7 @@ public:
     }
 #endif
 
-#if FAST_CACHE_ALLOC_MASK
+#if FAST_CACHE_ALLOC_MASK // 这个值难道不是一直为真吗？
     bool hasFastInstanceSize(size_t extra) const
     {
         if (__builtin_constant_p(extra) && extra == 0) {
@@ -853,7 +853,7 @@ struct protocol_list_t {
     }
 };
 
-struct class_ro_t {
+struct class_ro_t { // 类不可修改的原始核心
     uint32_t flags;
     uint32_t instanceStart;
     uint32_t instanceSize;
@@ -1182,7 +1182,7 @@ struct class_rw_ext_t {
     uint32_t version;
 };
 
-struct class_rw_t {
+struct class_rw_t { // 类可修改的原始核心<rw>
     // Be warned that Symbolication knows the layout of this structure.
     uint32_t flags;
     uint16_t witness;
@@ -1255,7 +1255,7 @@ public:
         return extAlloc(ro, true);
     }
 
-    const class_ro_t *ro() const {
+    const class_ro_t *ro() const { // 指针和指针指向的内容都不可更改
         auto v = get_ro_or_rwe();
         if (slowpath(v.is<class_rw_ext_t *>())) {
             return v.get<class_rw_ext_t *>(&ro_or_rw_ext)->ro;
@@ -1305,7 +1305,7 @@ struct class_data_bits_t {
     friend objc_class;
 
     // Values are the FAST_ flags above.
-    uintptr_t bits;
+    uintptr_t bits; // 可以理解为一个‘复合指针’。什么意思呢，就是bits不仅包含了指针，同时包含了Class的各种异或flag，来说明Class的属性。把这些信息复合在一起，仅用一个uint指针bits来表示。当需要取出这些信息时，需要用对应的以FAST_ 前缀开头的flag掩码对bits做按位与操作。
 private:
     bool getBit(uintptr_t bit) const
     {
@@ -1335,7 +1335,7 @@ private:
 
 public:
 
-    class_rw_t* data() const {
+    class_rw_t* data() const { // 指针不可更改，指针指向的内容可修改
         return (class_rw_t *)(bits & FAST_DATA_MASK);
     }
     void setData(class_rw_t *newData)
@@ -1354,7 +1354,7 @@ public:
     // and probably a memory barrier when realizeClass changes the data field
     const class_ro_t *safe_ro() {
         class_rw_t *maybe_rw = data();
-        if (maybe_rw->flags & RW_REALIZED) {
+        if (maybe_rw->flags & RW_REALIZED) { // 若类已经被实现<RW_REALIZED>，此时data()函数返回的是完整的类信息class_rw_t，此时需要进一步调用ro()方法获取不可变的类信息
             // maybe_rw is rw
             return maybe_rw->ro();
         } else {
