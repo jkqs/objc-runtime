@@ -47,7 +47,7 @@ typedef struct objc_object *id;
 #endif
 
 /// An opaque type that represents a method selector.
-typedef struct objc_selector *SEL;
+typedef struct objc_selector *SEL; // SEL可以理解为chat* 指针,根据C语言char*的规则，可以这样使用sel[index](sel为SEL变量)
 
 /// A pointer to the function of a method implementation. 
 #if !OBJC_OLD_DISPATCH_PROTOTYPES

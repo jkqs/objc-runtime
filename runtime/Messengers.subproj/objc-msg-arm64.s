@@ -290,7 +290,7 @@ LExit$0:
 .if $0 == GETIMP
 	b	LGetImpMiss
 .elseif $0 == NORMAL
-	b	__objc_msgSend_uncached
+	b	__objc_msgSend_uncached // ④若cache中未找到相应的方法，则调用缓存未找到方法__objc_msgSend_uncached
 .elseif $0 == LOOKUP
 	b	__objc_msgLookup_uncached
 .else
@@ -413,9 +413,9 @@ _objc_debug_taggedpointer_ext_classes:
 	ENTRY _objc_msgSend
 	UNWIND _objc_msgSend, NoFrame
 
-	cmp	p0, #0			// nil check and tagged pointer check
+	cmp	p0, #0			// nil check and tagged pointer check,①检查方法调用的对象是否为nil
 #if SUPPORT_TAGGED_POINTERS
-	b.le	LNilOrTagged		//  (MSB tagged pointer looks negative)
+	b.le	LNilOrTagged		//  (MSB tagged pointer looks negative)②若为nil，则跳转到LNilOrTagged位置，最终返回LReturnZero
 #else
 	b.eq	LReturnZero
 #endif
@@ -423,7 +423,7 @@ _objc_debug_taggedpointer_ext_classes:
 	GetClassFromIsa_p16 p13		// p16 = class
 LGetIsaDone:
 	// calls imp or objc_msgSend_uncached
-	CacheLookup NORMAL, _objc_msgSend
+	CacheLookup NORMAL, _objc_msgSend // ③若对象非nil则查找方法缓存列表
 
 #if SUPPORT_TAGGED_POINTERS
 LNilOrTagged:
@@ -557,7 +557,7 @@ LLookup_Nil:
 	// receiver and selector already in x0 and x1
 	mov	x2, x16
 	mov	x3, #3
-	bl	_lookUpImpOrForward
+	bl	_lookUpImpOrForward // ⑥查找方法，找不到则转发
 
 	// IMP in x0
 	mov	x17, x0
@@ -572,7 +572,7 @@ LLookup_Nil:
 	// THIS IS NOT A CALLABLE C FUNCTION
 	// Out-of-band p16 is the class to search
 	
-	MethodTableLookup
+	MethodTableLookup // ⑤去类的方法列表去查找
 	TailCallFunctionPointer x17
 
 	END_ENTRY __objc_msgSend_uncached

@@ -176,7 +176,7 @@
 * object_getClass.
 * Locking: None. If you add locking, tell gdb (rdar://7516456).
 **********************************************************************/
-Class object_getClass(id obj)
+Class object_getClass(id obj) // 对类调用该方法返回的是类的元类
 {
     if (obj) return obj->getIsa();
     else return Nil;

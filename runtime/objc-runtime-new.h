@@ -583,7 +583,7 @@ struct method_t {
     // and implementation.
     struct big {
         SEL name;
-        const char *types;
+        const char *types; // 表明方法的返回值和参数类型
         MethodListIMP imp;
     };
 

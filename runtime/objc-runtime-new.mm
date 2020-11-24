@@ -2670,7 +2670,7 @@ static Class realizeClassWithoutSwift(Class cls, Class previously)
     }
 
     // Attach categories
-    methodizeClass(cls, previously);
+    methodizeClass(cls, previously); // 将category中的内容附加到当前类
 
     return cls;
 }
@@ -5845,7 +5845,7 @@ search_method_list_inline(const method_list_t *mlist, SEL sel)
     } else {
         // Linear search of unsorted method list
         for (auto& meth : *mlist) {
-            if (meth.name() == sel) return &meth;
+            if (meth.name() == sel) return &meth; // 在方法列表中顺序遍历，找到则返回
         }
     }
 
@@ -6107,7 +6107,7 @@ resolveMethod_locked(id inst, SEL sel, Class cls, int behavior)
 
     if (! cls->isMetaClass()) {
         // try [cls resolveInstanceMethod:sel]
-        resolveInstanceMethod(inst, sel, cls);
+        resolveInstanceMethod(inst, sel, cls); // 动态方法解析
     } 
     else {
         // try [nonMetaClass resolveClassMethod:sel]
@@ -6218,7 +6218,7 @@ IMP lookUpImpOrForward(id inst, SEL sel, Class cls, int behavior)
 
     for (unsigned attempts = unreasonableClassCount();;) {
         // curClass method list.
-        Method meth = getMethodNoSuper_nolock(curClass, sel);
+        Method meth = getMethodNoSuper_nolock(curClass, sel); // 查找curClass的方法列表是否有sel的实现
         if (meth) {
             imp = meth->imp(false);
             goto done;
