@@ -78,10 +78,10 @@ typedef DisguisedPtr<objc_object *> weak_referrer_t;
 #define REFERRERS_OUT_OF_LINE 2
 
 struct weak_entry_t {
-    DisguisedPtr<objc_object> referent;
+    DisguisedPtr<objc_object> referent; // 被弱引用的对象
     union {
         struct {
-            weak_referrer_t *referrers;
+            weak_referrer_t *referrers; // 弱引用指针列表<该列表是动态数组>
             uintptr_t        out_of_line_ness : 2;
             uintptr_t        num_refs : PTR_MINUS_2;
             uintptr_t        mask;
